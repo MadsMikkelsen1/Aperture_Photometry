@@ -17,4 +17,4 @@ sns.set_context("paper")
 sns.set(font_scale=1.4)
 mycolors = ['#C188F7','#F79288','#7FB806','#F59B18']
 sns.set_palette("Set2") 
-print("Hej")
+
