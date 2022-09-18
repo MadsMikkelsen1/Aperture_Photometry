@@ -48,14 +48,47 @@ def showCircle(patch):
 
     plt.axis('scaled')
 
+# Pixel collector within circles
+def pixel_collector(x, y, r):
+    PixCollec = np.array([])
+    x_cent = x
+    y_cent = y
+    radius = r
+    for i in range(x - r, x + r):                                       # Pixel collector in x-direction 
+        for j in range(y - r, y + r):                                   # Picel collector in y-direction
+            distance = np.sqrt((i - x)**2 + (j - y)**2 )                # Distance
+            if distance < r:
+                PixCollec = np.append(PixCollec, imdata[j][i])
+    C1 = np.sum(PixCollec)
+    A1 = len(PixCollec)
+
+    print(C1, A1)
+    return PixCollec
+
+pixel_collector(289, 189, 15)           # Inner circle 
+pixel_collector(289, 189, 2*15)         # Outer circle
+
+# Calculation of brightness within inner and outer circle
+def brightness(C1, C2, A1, A2):
+    l = C2 - ((C1 - C2) / (A1 - A2)) * A2
+
+    print(l)
+    return l
+
+brightness(3283706, 4196638, 697, 2809)     # Result from brightness formula using A1, A2, C1, C2 from 'PixCollec' function
+
+# Move circle centrum to mouse click
+def mouse_event(event):
+    print('x: {} and y: {}'.format(event.xdata, event.ydata))
+
 # Display of image
 plt.axes().set_aspect('equal')                                                             # Equal x and y axis
-plt.imshow(imdata, origin = 'lower', cmap = 'viridis', clim = (L_Percent, U_Percent))      # Origin in lower left corner, colormap = viridis, limits found from 1st and 99th percentile
-plt.colorbar()
+plt.imshow(imdata, origin = 'lower', cmap = 'gray', clim = (L_Percent, U_Percent))         # Origin in lower left corner, colormap, limits found from 1st and 99th percentile
+plt.colorbar(label = 'Intensity')
 plt.grid(False)
 
-c_inner = createCircle(298, 189, 15)
-c_outer = createCircle(298, 189, 2*15)
+c_inner = createCircle(298, 189, 15)               # Drawing inner circle at (x_coordinate, y_coordinate, radius_inner)
+c_outer = createCircle(298, 189, 2*15)             # Drawing outer circle at (x_coordinate, y_coordinate, 2*radius_inner)
 showCircle(c_inner)
 showCircle(c_outer)
 
