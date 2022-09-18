@@ -29,9 +29,34 @@ imdata = hdulist[0].data
 L_Percent = np.percentile(imdata, 1)
 U_Percent = np.percentile(imdata, 99)
 
+# Defining circle
+def createCircle(x, y, r):
+    x_cent = x
+    y_cent = y
+    radius = r
+    circle = plt.Circle((x_cent, y_cent),
+                        radius = radius,
+                        color = 'r',
+                        fill = False,
+                        lw = 2)
+    return circle
+
+# Adding artist object onto figure
+def showCircle(patch):
+    ax = plt.gca()
+    ax.add_patch(patch)
+
+    plt.axis('scaled')
+
 # Display of image
 plt.axes().set_aspect('equal')                                                             # Equal x and y axis
 plt.imshow(imdata, origin = 'lower', cmap = 'viridis', clim = (L_Percent, U_Percent))      # Origin in lower left corner, colormap = viridis, limits found from 1st and 99th percentile
 plt.colorbar()
 plt.grid(False)
+
+c_inner = createCircle(298, 189, 15)
+c_outer = createCircle(298, 189, 2*15)
+showCircle(c_inner)
+showCircle(c_outer)
+
 plt.show()
