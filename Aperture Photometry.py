@@ -19,6 +19,7 @@ sns.set_context("paper")
 sns.set(font_scale=1.4)
 mycolors = ['#C188F7','#F79288','#7FB806','#F59B18']
 sns.set_palette("Set2") 
+fig = plt.gcf()
 
 # Import of FITS data
 fitsURL = '/Users/madsmikkelsen/Desktop/o4201193.10.fts'
@@ -29,17 +30,45 @@ imdata = hdulist[0].data
 L_Percent = np.percentile(imdata, 1)
 U_Percent = np.percentile(imdata, 99)
 
+
 # Defining circle
 def createCircle(x, y, r):
+    '''
+
+    Parameters:
+    Hej 1
+    Hej 2
+    Hej 3
+        - Hej 4
+        - Jeh 5
+    '''
+
     x_cent = x
     y_cent = y
     radius = r
-    circle = plt.Circle((x_cent, y_cent),
+    circle = plt.Circle((x, y),
                         radius = radius,
                         color = 'r',
                         fill = False,
                         lw = 2)
     return circle
+
+#def onclick(event):
+#    if event.xdata != None and event.ydata != None:
+#        x_click = event.xdata
+#        y_click = event.ydata
+#        print(event.xdata, event.ydata)
+#
+#    return x_click, y_click
+#cid = fig.canvas.mpl_connect('button_press_event', onclick)
+
+def onclick(event):
+    if event.dblclick:
+        fig, ax = plt.subplots()
+        circle = plt.Circle((event.xdata,event.ydata),2.5,color='black')
+        ax.add_artist(circle)
+
+cid = fig.canvas.mpl_connect('button_press_event',onclick)
 
 # Adding artist object onto figure
 def showCircle(patch):
@@ -77,19 +106,15 @@ def brightness(C1, C2, A1, A2):
 
 brightness(3283706, 4196638, 697, 2809)     # Result from brightness formula using A1, A2, C1, C2 from 'PixCollec' function
 
-# Move circle centrum to mouse click
-def mouse_event(event):
-    print('x: {} and y: {}'.format(event.xdata, event.ydata))
-
 # Display of image
 plt.axes().set_aspect('equal')                                                             # Equal x and y axis
 plt.imshow(imdata, origin = 'lower', cmap = 'gray', clim = (L_Percent, U_Percent))         # Origin in lower left corner, colormap, limits found from 1st and 99th percentile
 plt.colorbar(label = 'Intensity')
 plt.grid(False)
 
-c_inner = createCircle(298, 189, 15)               # Drawing inner circle at (x_coordinate, y_coordinate, radius_inner)
-c_outer = createCircle(298, 189, 2*15)             # Drawing outer circle at (x_coordinate, y_coordinate, 2*radius_inner)
-showCircle(c_inner)
-showCircle(c_outer)
+#c_inner = createCircle(onclick(x), onclick(y), 15)               # Drawing inner circle at (x_coordinate, y_coordinate, radius_inner)
+#c_outer = createCircle(onclick(10)[0], onclick(10)[1], 2*15)             # Drawing outer circle at (x_coordinate, y_coordinate, 2*radius_inner)
+#showCircle(c_inner)
+#showCircle(c_outer)
 
 plt.show()
