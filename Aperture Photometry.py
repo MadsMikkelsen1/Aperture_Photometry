@@ -33,16 +33,6 @@ U_Percent = np.percentile(imdata, 99)
 
 # Defining circle
 def createCircle(x, y, r):
-    '''
-
-    Parameters:
-    Hej 1
-    Hej 2
-    Hej 3
-        - Hej 4
-        - Jeh 5
-    '''
-
     x_cent = x
     y_cent = y
     radius = r
@@ -53,22 +43,14 @@ def createCircle(x, y, r):
                         lw = 2)
     return circle
 
-#def onclick(event):
-#    if event.xdata != None and event.ydata != None:
-#        x_click = event.xdata
-#        y_click = event.ydata
-#        print(event.xdata, event.ydata)
-#
-#    return x_click, y_click
-#cid = fig.canvas.mpl_connect('button_press_event', onclick)
-
 def onclick(event):
-    if event.dblclick:
-        fig, ax = plt.subplots()
-        circle = plt.Circle((event.xdata,event.ydata),2.5,color='black')
-        ax.add_artist(circle)
+    if event.xdata != None and event.ydata != None:
+        x_click = event.xdata
+        y_click = event.ydata
+        print(event.xdata, event.ydata)
 
-cid = fig.canvas.mpl_connect('button_press_event',onclick)
+    return x_click, y_click
+cid = fig.canvas.mpl_connect('button_press_event', onclick)
 
 # Adding artist object onto figure
 def showCircle(patch):
@@ -94,8 +76,8 @@ def pixel_collector(x, y, r):
     print(C1, A1)
     return PixCollec
 
-pixel_collector(289, 189, 15)           # Inner circle 
-pixel_collector(289, 189, 2*15)         # Outer circle
+pixel_collector(181, 266, 15)           # Inner circle 
+pixel_collector(181, 266, 2*15)         # Outer circle
 
 # Calculation of brightness within inner and outer circle
 def brightness(C1, C2, A1, A2):
@@ -104,7 +86,7 @@ def brightness(C1, C2, A1, A2):
     print(l)
     return l
 
-brightness(3283706, 4196638, 697, 2809)     # Result from brightness formula using A1, A2, C1, C2 from 'PixCollec' function
+brightness(993165, 427650, 697, 2809)     # Result from brightness formula using A1, A2, C1, C2 from 'PixCollec' function
 
 # Display of image
 plt.axes().set_aspect('equal')                                                             # Equal x and y axis
@@ -112,9 +94,16 @@ plt.imshow(imdata, origin = 'lower', cmap = 'gray', clim = (L_Percent, U_Percent
 plt.colorbar(label = 'Intensity')
 plt.grid(False)
 
-#c_inner = createCircle(onclick(x), onclick(y), 15)               # Drawing inner circle at (x_coordinate, y_coordinate, radius_inner)
-#c_outer = createCircle(onclick(10)[0], onclick(10)[1], 2*15)             # Drawing outer circle at (x_coordinate, y_coordinate, 2*radius_inner)
-#showCircle(c_inner)
-#showCircle(c_outer)
+c_inner = createCircle(181, 266, 15)               # Drawing inner circle at (x_coordinate, y_coordinate, radius_inner)
+c_outer = createCircle(181, 266, 2*15)             # Drawing outer circle at (x_coordinate, y_coordinate, 2*radius_inner)
+showCircle(c_inner)
+showCircle(c_outer)
+
+def mag_calc(l1, l2):
+    l1 = l1
+    l2 = l2
+    magnitude = -2.5*np.log(l1 / l2)
+
+return magnitude
 
 plt.show()
