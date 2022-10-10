@@ -92,12 +92,13 @@ def pixel_collector(x, y, r):
     C1 = np.sum(PixCollec)
     A1 = len(PixCollec)
 
-    print("Star of interest: %s, %s" % (C1, A1))
     return PixCollec
 
-poi_inner_pixels = pixel_collector(214, 239, 10)                # Counting pixels inside inner-most circle for Point of Interest star
-poi_innertorus_pixels = pixel_collector(214, 239, 2*10)         # Counting pixels inside inner-most torus circle for Point of Interest star
-poi_outertorus_pixels = pixel_collector(214, 239, 3*10)         # Counting pixels from outer-most torus circle for POI star
+poi_inner_pixels = pixel_collector(214, 239, 8)                # Counting pixels inside inner-most circle for Point of Interest star
+poi_innertorus_pixels = pixel_collector(214, 239, 2*8)         # Counting pixels inside inner-most torus circle for Point of Interest star
+poi_outertorus_pixels = pixel_collector(214, 239, 3*8)         # Counting pixels from outer-most torus circle for POI star
+poi_background_noise = np.sum(poi_outertorus_pixels) - np.sum(poi_innertorus_pixels)                 # Making sure only pixels inside torus is calculated
+poi_star_brightness = np.sum(poi_inner_pixels)                                                       # Star of interest brightness
 
 # Pixel collector within circles
 def refstar_pixel_collector(x, y, r):
@@ -113,13 +114,24 @@ def refstar_pixel_collector(x, y, r):
     refstar_C1 = np.sum(refstar_PixCollec)
     refstar_A1 = len(refstar_PixCollec)
 
-    print("Reference star: %s, %s" % (refstar_C1, refstar_A1))
     return refstar_PixCollec
 
-poi_inner_pixels = refstar_pixel_collector(181, 268, 8)                # Counting pixels inside inner-most circle for Point of Interest star
-poi_innertorus_pixels = refstar_pixel_collector(181, 268, 2*8)         # Counting pixels inside inner-most torus circle for Point of Interest star
-poi_outertorus_pixels = refstar_pixel_collector(181, 268, 3*8)         # Counting pixels from outer-most torus circle for POI star
+refstar_inner_pixels = refstar_pixel_collector(181, 268, 8)                # Counting pixels inside inner-most circle for Point of Interest star
+refstar_innertorus_pixels = refstar_pixel_collector(181, 268, 2*8)         # Counting pixels inside inner-most torus circle for Point of Interest star
+refstar_outertorus_pixels = refstar_pixel_collector(181, 268, 3*8)         # Counting pixels from outer-most torus circle for POI star
+refstar_background_noise = np.sum(refstar_outertorus_pixels) - np.sum(refstar_innertorus_pixels)     # Making sure only pixels within torus is calculated
+refstar_star_brightness = np.sum(refstar_inner_pixels)                                               # Star brightness 
+refstar_inner_area = len(refstar_inner_pixels)
+refstar_torus_area = len(refstar_outertorus_pixels) - len(refstar_innertorus_pixels)
 
+print("Inner area: %.f pixels" % refstar_inner_area)
+print("Torus area: %.f pixels" % refstar_torus_area)
+
+# Printing values for brightness and background noise
+print("Brightness for star of interest: %.f" % poi_star_brightness)
+print("Brightness for reference star: %.f" % refstar_star_brightness)
+print("Background noise around star of interest: %.f" % poi_background_noise)
+print("Background noise around reference star: %.f" % refstar_background_noise)
 
 # Calculation of brightness within inner and outer circle
 def brightness(C1, C2, A1, A2):
@@ -127,8 +139,10 @@ def brightness(C1, C2, A1, A2):
 
     return l
 
-print("Brightness of V_1: ", brightness(288562, 625468, 437, 2260))     # Result from brightness formula using C1, C2, A1, A2 from 'PixCollec' function
-print("Brightness of S_1: ", brightness(281432, 273451, 193, 996))
+print("Brightness of V\u2081: %.f" % brightness(poi_star_brightness, poi_background_noise, refstar_inner_area , refstar_torus_area))          # Result from brightness formula using C1, C2, A1, A2 from 'PixCollec' function
+print("Brightness of S\u2081: %.f" % brightness(refstar_star_brightness, refstar_background_noise, refstar_inner_area, refstar_torus_area))
+l1 = brightness(poi_star_brightness, poi_background_noise, refstar_inner_area , refstar_torus_area) 
+l2 = brightness(refstar_star_brightness, refstar_background_noise, refstar_inner_area, refstar_torus_area) 
 
 # Display of image
 plt.axes().set_aspect('equal')                                                             # Equal x and y axis
@@ -136,21 +150,25 @@ plt.imshow(imdata, origin = 'lower', cmap = 'gray', clim = (L_Percent, U_Percent
 plt.colorbar(label = 'Intensity')
 plt.grid(False)
 
-# Display of circles
+# Display of star of interest circles
 poi_inner = createCircle(214, 239, 8)               # Drawing inner circle for point of interest star at (x_coordinate, y_coordinate, radius_inner)
 poi_innertorus = createCircle(214, 239, 2*8)        # Drawing inner torus circles for POI star at (x_coordinate, y_coordinate, 2*radius_inner)
 poi_outertorus = createCircle(214, 239, 3*8)        # Drawing outer torus circle for POI star at (x_coordinate, y_coordinate, 3*radius_inner)
 showCircle(poi_inner)
 showCircle(poi_innertorus)
 showCircle(poi_outertorus)
+plt.scatter(214, 239, marker = '+', s = 20, c = 'r')
 
+# Display of reference star circles
 refstar_inner = createCircle2(181, 268, 8)            # Drawing inner circle for reference star at (x_coordinate, y_coordinate, radius_inner)
 refstar_innertorus = createCircle2(181, 268, 2*8)      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 2*radius_inner)
 refstar_outertorus = createCircle2(181, 268, 3*8)      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 3*radius_inner)
 showCircle(refstar_inner)
 showCircle(refstar_innertorus)
 showCircle(refstar_outertorus)
+plt.scatter(181, 268, marker = '+', s = 20, c = 'b')
 
+# Calculation of magnitudes
 def mag_calc(l1, l2):
     l1 = l1
     l2 = l2
@@ -158,7 +176,7 @@ def mag_calc(l1, l2):
 
     return magnitude
 
-print("Magnitude ratio: ", mag_calc(186337, 283350))
+print("Magnitude ratio: %.3F" % mag_calc(l1, l2))
 
 #Plot af brightness af V_1 som funktion af blænderadius
 #l_list = np.array([0, 34716, 134976, 187855, 186337, 3086240, 207800])
