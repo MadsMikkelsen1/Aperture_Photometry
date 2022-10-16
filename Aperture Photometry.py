@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from astropy.io import fits
 from matplotlib.widgets import Slider, Button
+import cv2
 
 # Matplotlib and Seaborn plot customizations
 plt.rcParams['figure.figsize'] = (15,10)
@@ -31,6 +32,8 @@ imdata = hdulist[0].data
 L_Percent = np.percentile(imdata, 1)
 U_Percent = np.percentile(imdata, 99)
 
+#Inputradius = float(input("Input radius of aperture circle: "))
+
 # Circles
 """ 
 Description of circles. 
@@ -43,7 +46,7 @@ def createCircle(x, y, r):
     y_cent = y
     radius = r
     circle = plt.Circle((x, y),
-                        radius = radius,
+                        radius = r,
                         color = 'r',
                         fill = False,
                         lw = 2)
@@ -55,7 +58,7 @@ def createCircle2(x, y, r):
     y_cent = y
     radius = r
     circle2 = plt.Circle((x, y),
-                        radius = radius,
+                        radius = r,
                         color = 'b',
                         fill = False,
                         lw = 2)
@@ -94,7 +97,7 @@ def pixel_collector(x, y, r):
 
     return PixCollec
 
-poi_inner_pixels = pixel_collector(214, 239, 8)                # Counting pixels inside inner-most circle for Point of Interest star
+poi_inner_pixels = pixel_collector(214, 239, 8)               # Counting pixels inside inner-most circle for Point of Interest star
 poi_innertorus_pixels = pixel_collector(214, 239, 2*8)         # Counting pixels inside inner-most torus circle for Point of Interest star
 poi_outertorus_pixels = pixel_collector(214, 239, 3*8)         # Counting pixels from outer-most torus circle for POI star
 poi_background_noise = np.sum(poi_outertorus_pixels) - np.sum(poi_innertorus_pixels)                 # Making sure only pixels inside torus is calculated
@@ -179,44 +182,12 @@ def mag_calc(l1, l2):
 print("Magnitude ratio: %.3F" % mag_calc(l1, l2))
 
 #Plot af brightness af V_1 som funktion af blænderadius
-#l_list = np.array([0, 34716, 134976, 187855, 186337, 3086240, 207800])
-#r_list = np.array([0, 2, 4, 6, 8, 10, 12])
-
-#plt.scatter(r_list, l_list)
-
-#   Defining Slider
-#t = np.linspace(0, 1, 1000)
-
-# Define initial parameters
-#init_radius = 5
-
-# Make a vertically oriented slider to control the radius
-#axrad = fig.add_axes([0.1, 0.25, 0.0225, 0.63])
-#amp_slider = Slider(
-#    ax=axrad,
-#    label="Radius",
-#    valmin=0.5,
-#    valmax=20,
-#    valinit=init_radius,
-#    orientation="vertical"
-#)
-
-# The function to be called anytime a slider's value changes
-#def update(val):
-#    plt.Circle.set_radius(createCircle(t, amp_slider.val, amp_slider.val))
-#    fig.canvas.draw_idle()
-
-# register the update function with each slider
-#amp_slider.on_changed(update)
-
-# Create a `matplotlib.widgets.Button` to reset the sliders to initial values.
-#resetax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
-#button = Button(resetax, 'Reset', hovercolor='0.975')
-
-
-#def reset(event):
-#    amp_slider.reset()
-#button.on_clicked(reset)
-
+l_list = np.array([0, 5239, 33248, 92523, 135705, 162874, 187946, 196939, 202039, 202998, 204583, 207801, 207587, 209293])
+rs = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
+plt.figure()
+plt.xlabel("Aperture radius")
+plt.ylabel("Brightness [pixels / area]")
+plt.title(r"Lightcurve for V$_1$")
+plt.plot(rs, l_list)
 
 plt.show()
