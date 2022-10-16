@@ -6,7 +6,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from astropy.io import fits
 from matplotlib.widgets import Slider, Button
-import cv2
+#import cv2
+
+# Stars of interest
+X_STAR1 = 214
+Y_STAR1 = 239
 
 # Matplotlib and Seaborn plot customizations
 plt.rcParams['figure.figsize'] = (15,10)
@@ -24,7 +28,7 @@ sns.set_palette("Set2")
 fig = plt.gcf()
 
 # Import of FITS data
-fitsURL = '/Users/madsmikkelsen/Desktop/o4201193.10.fts'
+fitsURL = 'o4201193.10.fts'
 hdulist = fits.open(fitsURL)
 imdata = hdulist[0].data
 
@@ -40,29 +44,17 @@ Description of circles.
     Circle 1: Creates a circle around the star with a custom radius appropriate to the star's apparent size.
     Circle 2: Creates a circle with minimum radius of circle 1. This is the lower bound for the background noise collection.
 """
-# Defining circle 1
-def createCircle(x, y, r):
+# Defining circle
+def createCircle(x, y, r, c):
     x_cent = x
     y_cent = y
     radius = r
     circle = plt.Circle((x, y),
                         radius = r,
-                        color = 'r',
+                        color = c,
                         fill = False,
                         lw = 2)
     return circle
-
-# Defining circle 2
-def createCircle2(x, y, r):
-    x_cent = x
-    y_cent = y
-    radius = r
-    circle2 = plt.Circle((x, y),
-                        radius = r,
-                        color = 'b',
-                        fill = False,
-                        lw = 2)
-    return circle2
 
 # Coordinates from mouse click
 def onclick(event):
@@ -97,9 +89,9 @@ def pixel_collector(x, y, r):
 
     return PixCollec
 
-poi_inner_pixels = pixel_collector(214, 239, 8)               # Counting pixels inside inner-most circle for Point of Interest star
-poi_innertorus_pixels = pixel_collector(214, 239, 2*8)         # Counting pixels inside inner-most torus circle for Point of Interest star
-poi_outertorus_pixels = pixel_collector(214, 239, 3*8)         # Counting pixels from outer-most torus circle for POI star
+poi_inner_pixels = pixel_collector(X_STAR1, Y_STAR1, 8)               # Counting pixels inside inner-most circle for Point of Interest star
+poi_innertorus_pixels = pixel_collector(X_STAR1, Y_STAR1, 2*8)         # Counting pixels inside inner-most torus circle for Point of Interest star
+poi_outertorus_pixels = pixel_collector(X_STAR1, Y_STAR1, 3*8)         # Counting pixels from outer-most torus circle for POI star
 poi_background_noise = np.sum(poi_outertorus_pixels) - np.sum(poi_innertorus_pixels)                 # Making sure only pixels inside torus is calculated
 poi_star_brightness = np.sum(poi_inner_pixels)                                                       # Star of interest brightness
 
@@ -154,18 +146,18 @@ plt.colorbar(label = 'Intensity')
 plt.grid(False)
 
 # Display of star of interest circles
-poi_inner = createCircle(214, 239, 8)               # Drawing inner circle for point of interest star at (x_coordinate, y_coordinate, radius_inner)
-poi_innertorus = createCircle(214, 239, 2*8)        # Drawing inner torus circles for POI star at (x_coordinate, y_coordinate, 2*radius_inner)
-poi_outertorus = createCircle(214, 239, 3*8)        # Drawing outer torus circle for POI star at (x_coordinate, y_coordinate, 3*radius_inner)
+poi_inner = createCircle(X_STAR1, Y_STAR1, 8, 'r')               # Drawing inner circle for point of interest star at (x_coordinate, y_coordinate, radius_inner)
+poi_innertorus = createCircle(X_STAR1, Y_STAR1, 2*8, 'r')        # Drawing inner torus circles for POI star at (x_coordinate, y_coordinate, 2*radius_inner)
+poi_outertorus = createCircle(X_STAR1, Y_STAR1, 3*8, 'r')        # Drawing outer torus circle for POI star at (x_coordinate, y_coordinate, 3*radius_inner)
 showCircle(poi_inner)
 showCircle(poi_innertorus)
 showCircle(poi_outertorus)
-plt.scatter(214, 239, marker = '+', s = 20, c = 'r')
+plt.scatter(X_STAR1, Y_STAR1, marker = '+', s = 20, c = 'r')
 
 # Display of reference star circles
-refstar_inner = createCircle2(181, 268, 8)            # Drawing inner circle for reference star at (x_coordinate, y_coordinate, radius_inner)
-refstar_innertorus = createCircle2(181, 268, 2*8)      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 2*radius_inner)
-refstar_outertorus = createCircle2(181, 268, 3*8)      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 3*radius_inner)
+refstar_inner = createCircle(181, 268, 8, 'g')             # Drawing inner circle for reference star at (x_coordinate, y_coordinate, radius_inner)
+refstar_innertorus = createCircle(181, 268, 2*8, 'g')      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 2*radius_inner)
+refstar_outertorus = createCircle(181, 268, 3*8, 'g')      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 3*radius_inner)
 showCircle(refstar_inner)
 showCircle(refstar_innertorus)
 showCircle(refstar_outertorus)
@@ -173,11 +165,22 @@ plt.scatter(181, 268, marker = '+', s = 20, c = 'b')
 
 # Calculation of magnitudes
 def mag_calc(l1, l2):
-    l1 = l1
-    l2 = l2
     magnitude = -2.5 * np.log(l1 / l2)
 
     return magnitude
+
+def star_brightness_L(x_star, y_star):
+    L = []
+    for i in range(0, 13):    
+        poi_inner_pixels = pixel_collector(x_star, y_star, i)                # Counting pixels inside inner-most circle for Point of Interest star
+        poi_innertorus_pixels = pixel_collector(x_star, y_star, 2*i)         # Counting pixels inside inner-most torus circle for Point of Interest star
+        poi_outertorus_pixels = pixel_collector(x_star, y_star, 3*i)         # Counting pixels from outer-most torus circle for POI star
+        poi_background_noise = np.sum(poi_outertorus_pixels) - np.sum(poi_innertorus_pixels)                 # Making sure only pixels inside torus is calculated
+        poi_star_brightness = np.sum(poi_inner_pixels)                                                       # Star of interest brightness
+        L.append(poi_star_brightness)
+    print(L)
+
+l_list_test = star_brightness_L(X_STAR1, Y_STAR1)
 
 print("Magnitude ratio: %.3F" % mag_calc(l1, l2))
 
