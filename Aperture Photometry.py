@@ -5,12 +5,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from astropy.io import fits
-from matplotlib.widgets import Slider, Button
+from matplotlib.widgets import Slider, Button, RadioButtons, CheckButtons
+from matplotlib.backend_bases import MouseButton
 #import cv2
-
-# Stars of interest
-X_STAR1 = 214
-Y_STAR1 = 239
 
 # Matplotlib and Seaborn plot customizations
 plt.rcParams['figure.figsize'] = (15,10)
@@ -66,6 +63,13 @@ def onclick(event):
     return x_click, y_click
 cid = fig.canvas.mpl_connect('button_press_event', onclick)
 
+# Stars of interest
+X_STAR1 = 214
+Y_STAR1 = 239
+
+X_STAR2 = 155
+Y_STAR2 = 145
+
 # Adding artist object onto figure
 def showCircle(patch):
     ax = plt.gca()
@@ -111,9 +115,9 @@ def refstar_pixel_collector(x, y, r):
 
     return refstar_PixCollec
 
-refstar_inner_pixels = refstar_pixel_collector(181, 268, 8)                # Counting pixels inside inner-most circle for Point of Interest star
-refstar_innertorus_pixels = refstar_pixel_collector(181, 268, 2*8)         # Counting pixels inside inner-most torus circle for Point of Interest star
-refstar_outertorus_pixels = refstar_pixel_collector(181, 268, 3*8)         # Counting pixels from outer-most torus circle for POI star
+refstar_inner_pixels = refstar_pixel_collector(X_STAR2, Y_STAR2, 8)                # Counting pixels inside inner-most circle for Point of Interest star
+refstar_innertorus_pixels = refstar_pixel_collector(X_STAR2, Y_STAR2, 2*8)         # Counting pixels inside inner-most torus circle for Point of Interest star
+refstar_outertorus_pixels = refstar_pixel_collector(X_STAR2, Y_STAR2, 3*8)         # Counting pixels from outer-most torus circle for POI star
 refstar_background_noise = np.sum(refstar_outertorus_pixels) - np.sum(refstar_innertorus_pixels)     # Making sure only pixels within torus is calculated
 refstar_star_brightness = np.sum(refstar_inner_pixels)                                               # Star brightness 
 refstar_inner_area = len(refstar_inner_pixels)
@@ -155,13 +159,13 @@ showCircle(poi_outertorus)
 plt.scatter(X_STAR1, Y_STAR1, marker = '+', s = 20, c = 'r')
 
 # Display of reference star circles
-refstar_inner = createCircle(181, 268, 8, 'g')             # Drawing inner circle for reference star at (x_coordinate, y_coordinate, radius_inner)
-refstar_innertorus = createCircle(181, 268, 2*8, 'g')      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 2*radius_inner)
-refstar_outertorus = createCircle(181, 268, 3*8, 'g')      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 3*radius_inner)
+refstar_inner = createCircle(X_STAR2, Y_STAR2, 8, 'g')             # Drawing inner circle for reference star at (x_coordinate, y_coordinate, radius_inner, colour)
+refstar_innertorus = createCircle(X_STAR2, Y_STAR2, 2*8, 'g')      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 2*radius_inner, colour)
+refstar_outertorus = createCircle(X_STAR2, Y_STAR2, 3*8, 'g')      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 3*radius_inner, colour)
 showCircle(refstar_inner)
 showCircle(refstar_innertorus)
 showCircle(refstar_outertorus)
-plt.scatter(181, 268, marker = '+', s = 20, c = 'b')
+plt.scatter(X_STAR2, Y_STAR2, marker = '+', s = 20, c = 'g')
 
 # Calculation of magnitudes
 def mag_calc(l1, l2):
@@ -171,26 +175,28 @@ def mag_calc(l1, l2):
 
 def star_brightness_L(x_star, y_star):
     L = []
-    for i in range(0, 13):    
+    for i in range(0, 25):    
         poi_inner_pixels = pixel_collector(x_star, y_star, i)                # Counting pixels inside inner-most circle for Point of Interest star
         poi_innertorus_pixels = pixel_collector(x_star, y_star, 2*i)         # Counting pixels inside inner-most torus circle for Point of Interest star
         poi_outertorus_pixels = pixel_collector(x_star, y_star, 3*i)         # Counting pixels from outer-most torus circle for POI star
         poi_background_noise = np.sum(poi_outertorus_pixels) - np.sum(poi_innertorus_pixels)                 # Making sure only pixels inside torus is calculated
         poi_star_brightness = np.sum(poi_inner_pixels)                                                       # Star of interest brightness
         L.append(poi_star_brightness)
+    return L
     print(L)
 
 l_list_test = star_brightness_L(X_STAR1, Y_STAR1)
+#print(l_list_test)
 
 print("Magnitude ratio: %.3F" % mag_calc(l1, l2))
 
 #Plot af brightness af V_1 som funktion af blænderadius
 l_list = np.array([0, 5239, 33248, 92523, 135705, 162874, 187946, 196939, 202039, 202998, 204583, 207801, 207587, 209293])
-rs = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
+r_list = np.linspace(0, 25, 25)
 plt.figure()
 plt.xlabel("Aperture radius")
 plt.ylabel("Brightness [pixels / area]")
 plt.title(r"Lightcurve for V$_1$")
-plt.plot(rs, l_list)
+plt.plot(r_list, l_list_test)
 
 plt.show()
