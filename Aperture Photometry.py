@@ -5,9 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from astropy.io import fits
-from matplotlib.widgets import Slider, Button, RadioButtons, CheckButtons
-from matplotlib.backend_bases import MouseButton
-#import cv2
+import glob
+fitsfiles = glob.glob('./mh*.fit')
 
 # Matplotlib and Seaborn plot customizations
 plt.rcParams['figure.figsize'] = (15,10)
@@ -27,20 +26,33 @@ fig = plt.gcf()
 # Import of FITS data
 fitsURL = 'o4201193.10.fts'
 hdulist = fits.open(fitsURL)
+hdulist[0].header
 imdata = hdulist[0].data
+exptime = hdulist[0].header["EXPTIME"]   # Exposure time [sec] (150)
+gain = hdulist[0].header["GAIN"]         # Readout gain [e/ADU] (1.8)
+rdnoise = hdulist[0].header["RDNOISE"]   # Readout noise [e] (5.1)
+airmass = hdulist[0].header["AIRMASS"]   # Airmass (1.378)
+heljd = hdulist[0].header["HELJD"]       # Heliocentric Julian Date of mid exposure (2455950.638041)
+#print(exptime, gain, rdnoise, airmass, heljd)
 
-# Calculation of the 1st and 99th percentile value of image
-L_Percent = np.percentile(imdata, 1)
-U_Percent = np.percentile(imdata, 99)
 
-#Inputradius = float(input("Input radius of aperture circle: "))
+# Calculation of the 5th and 95th percentile value of image
+L_Percent = np.percentile(imdata, 10)
+U_Percent = np.percentile(imdata, 95)
+
+# Display of image
+plt.axes().set_aspect('equal')                                                             # Equal x and y axis
+plt.grid(False)
+plt.imshow(imdata, origin = 'lower', cmap = 'gray', clim = (L_Percent, U_Percent))         # Origin in lower left corner, colormap, limits found from 1st and 99th percentile
+
+# Stars of interest
+X_STAR1 = 214
+Y_STAR1 = 239
+
+X_STAR2 = 181
+Y_STAR2 = 267
 
 # Circles
-""" 
-Description of circles. 
-    Circle 1: Creates a circle around the star with a custom radius appropriate to the star's apparent size.
-    Circle 2: Creates a circle with minimum radius of circle 1. This is the lower bound for the background noise collection.
-"""
 # Defining circle
 def createCircle(x, y, r, c):
     x_cent = x
@@ -62,13 +74,6 @@ def onclick(event):
 
     return x_click, y_click
 cid = fig.canvas.mpl_connect('button_press_event', onclick)
-
-# Stars of interest
-X_STAR1 = 214
-Y_STAR1 = 239
-
-X_STAR2 = 155
-Y_STAR2 = 145
 
 # Adding artist object onto figure
 def showCircle(patch):
@@ -93,11 +98,15 @@ def pixel_collector(x, y, r):
 
     return PixCollec
 
-poi_inner_pixels = pixel_collector(X_STAR1, Y_STAR1, 8)               # Counting pixels inside inner-most circle for Point of Interest star
-poi_innertorus_pixels = pixel_collector(X_STAR1, Y_STAR1, 2*8)         # Counting pixels inside inner-most torus circle for Point of Interest star
-poi_outertorus_pixels = pixel_collector(X_STAR1, Y_STAR1, 3*8)         # Counting pixels from outer-most torus circle for POI star
+ap_rad = 8
+
+poi_inner_pixels = pixel_collector(X_STAR1, Y_STAR1, ap_rad)               # Counting pixels inside inner-most circle for Point of Interest star
+poi_innertorus_pixels = pixel_collector(X_STAR1, Y_STAR1, 2*ap_rad)         # Counting pixels inside inner-most torus circle for Point of Interest star
+poi_outertorus_pixels = pixel_collector(X_STAR1, Y_STAR1, 3*ap_rad)         # Counting pixels from outer-most torus circle for POI star
 poi_background_noise = np.sum(poi_outertorus_pixels) - np.sum(poi_innertorus_pixels)                 # Making sure only pixels inside torus is calculated
-poi_star_brightness = np.sum(poi_inner_pixels)                                                       # Star of interest brightness
+poi_star_brightness = np.sum(poi_inner_pixels)
+poi_inner_area = len(poi_inner_pixels)
+poi_torus_area = len(poi_outertorus_pixels) - len(poi_innertorus_pixels)                                                      # Star of interest brightness
 
 # Pixel collector within circles
 def refstar_pixel_collector(x, y, r):
@@ -115,16 +124,16 @@ def refstar_pixel_collector(x, y, r):
 
     return refstar_PixCollec
 
-refstar_inner_pixels = refstar_pixel_collector(X_STAR2, Y_STAR2, 8)                # Counting pixels inside inner-most circle for Point of Interest star
-refstar_innertorus_pixels = refstar_pixel_collector(X_STAR2, Y_STAR2, 2*8)         # Counting pixels inside inner-most torus circle for Point of Interest star
-refstar_outertorus_pixels = refstar_pixel_collector(X_STAR2, Y_STAR2, 3*8)         # Counting pixels from outer-most torus circle for POI star
+refstar_inner_pixels = refstar_pixel_collector(X_STAR2, Y_STAR2, ap_rad)                # Counting pixels inside inner-most circle for Point of Interest star
+refstar_innertorus_pixels = refstar_pixel_collector(X_STAR2, Y_STAR2, 2*ap_rad)         # Counting pixels inside inner-most torus circle for Point of Interest star
+refstar_outertorus_pixels = refstar_pixel_collector(X_STAR2, Y_STAR2, 3*ap_rad)         # Counting pixels from outer-most torus circle for POI star
 refstar_background_noise = np.sum(refstar_outertorus_pixels) - np.sum(refstar_innertorus_pixels)     # Making sure only pixels within torus is calculated
 refstar_star_brightness = np.sum(refstar_inner_pixels)                                               # Star brightness 
 refstar_inner_area = len(refstar_inner_pixels)
 refstar_torus_area = len(refstar_outertorus_pixels) - len(refstar_innertorus_pixels)
 
-print("Inner area: %.f pixels" % refstar_inner_area)
-print("Torus area: %.f pixels" % refstar_torus_area)
+print("Inner area: %.f pixels" % poi_inner_area)
+print("Torus area: %.f pixels" % poi_torus_area)
 
 # Printing values for brightness and background noise
 print("Brightness for star of interest: %.f" % poi_star_brightness)
@@ -143,29 +152,35 @@ print("Brightness of S\u2081: %.f" % brightness(refstar_star_brightness, refstar
 l1 = brightness(poi_star_brightness, poi_background_noise, refstar_inner_area , refstar_torus_area) 
 l2 = brightness(refstar_star_brightness, refstar_background_noise, refstar_inner_area, refstar_torus_area) 
 
-# Display of image
-plt.axes().set_aspect('equal')                                                             # Equal x and y axis
-plt.imshow(imdata, origin = 'lower', cmap = 'gray', clim = (L_Percent, U_Percent))         # Origin in lower left corner, colormap, limits found from 1st and 99th percentile
-plt.colorbar(label = 'Intensity')
-plt.grid(False)
-
 # Display of star of interest circles
-poi_inner = createCircle(X_STAR1, Y_STAR1, 8, 'r')               # Drawing inner circle for point of interest star at (x_coordinate, y_coordinate, radius_inner)
-poi_innertorus = createCircle(X_STAR1, Y_STAR1, 2*8, 'r')        # Drawing inner torus circles for POI star at (x_coordinate, y_coordinate, 2*radius_inner)
-poi_outertorus = createCircle(X_STAR1, Y_STAR1, 3*8, 'r')        # Drawing outer torus circle for POI star at (x_coordinate, y_coordinate, 3*radius_inner)
+poi_inner = createCircle(X_STAR1, Y_STAR1, ap_rad, 'r')               # Drawing inner circle for point of interest star at (x_coordinate, y_coordinate, radius_inner)
+poi_innertorus = createCircle(X_STAR1, Y_STAR1, 2*ap_rad, 'r')        # Drawing inner torus circles for POI star at (x_coordinate, y_coordinate, 2*radius_inner)
+poi_outertorus = createCircle(X_STAR1, Y_STAR1, 3*ap_rad, 'r')        # Drawing outer torus circle for POI star at (x_coordinate, y_coordinate, 3*radius_inner)
 showCircle(poi_inner)
 showCircle(poi_innertorus)
 showCircle(poi_outertorus)
 plt.scatter(X_STAR1, Y_STAR1, marker = '+', s = 20, c = 'r')
 
 # Display of reference star circles
-refstar_inner = createCircle(X_STAR2, Y_STAR2, 8, 'g')             # Drawing inner circle for reference star at (x_coordinate, y_coordinate, radius_inner, colour)
-refstar_innertorus = createCircle(X_STAR2, Y_STAR2, 2*8, 'g')      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 2*radius_inner, colour)
-refstar_outertorus = createCircle(X_STAR2, Y_STAR2, 3*8, 'g')      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 3*radius_inner, colour)
+refstar_inner = createCircle(X_STAR2, Y_STAR2, ap_rad, 'g')             # Drawing inner circle for reference star at (x_coordinate, y_coordinate, radius_inner, colour)
+refstar_innertorus = createCircle(X_STAR2, Y_STAR2, 2*ap_rad, 'g')      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 2*radius_inner, colour)
+refstar_outertorus = createCircle(X_STAR2, Y_STAR2, 3*ap_rad, 'g')      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 3*radius_inner, colour)
 showCircle(refstar_inner)
 showCircle(refstar_innertorus)
 showCircle(refstar_outertorus)
 plt.scatter(X_STAR2, Y_STAR2, marker = '+', s = 20, c = 'g')
+
+# Counting pixels in x and y direction near star of interest
+delta = 100                              # Size of cutout around star
+xpixels = np.arange(X_STAR1 - delta, X_STAR1 + delta)
+ypixels = np.arange(Y_STAR1 - delta, Y_STAR1 + delta)
+
+fig, ax = plt.subplots()
+ax.set_xlabel('Pixels')
+ax.set_ylabel('Counts')
+ax.plot(xpixels, imdata[Y_STAR1, xpixels], label='x')
+ax.plot(ypixels, imdata[xpixels, X_STAR1], label='y')
+ax.legend()
 
 # Calculation of magnitudes
 def mag_calc(l1, l2):
@@ -190,13 +205,87 @@ l_list_test = star_brightness_L(X_STAR1, Y_STAR1)
 
 print("Magnitude ratio: %.3F" % mag_calc(l1, l2))
 
-#Plot af brightness af V_1 som funktion af blænderadius
-l_list = np.array([0, 5239, 33248, 92523, 135705, 162874, 187946, 196939, 202039, 202998, 204583, 207801, 207587, 209293])
-r_list = np.linspace(0, 25, 25)
+# Cropped image around star of interest
+xnew, ynew = np.meshgrid(xpixels, ypixels)
+crop = imdata[ynew, xnew]
 plt.figure()
-plt.xlabel("Aperture radius")
-plt.ylabel("Brightness [pixels / area]")
-plt.title(r"Lightcurve for V$_1$")
-plt.plot(r_list, l_list_test)
+plt.imshow(crop, origin = 'lower', cmap = 'gray', clim = (L_Percent, U_Percent))         # Origin in lower left corner, colormap, limits found from 1st and 99th percentile
+plt.grid(False)
+
+showCircle(createCircle(100, 99, ap_rad, 'r'))
+showCircle(createCircle(100, 99, 2*ap_rad, 'r'))
+showCircle(createCircle(100, 99, 3*ap_rad, 'r'))
+plt.scatter(100, 99, marker = '+', s = 20, c = 'r')
+
+showCircle(createCircle(67, 128, ap_rad, 'g'))
+showCircle(createCircle(67, 128, 2*ap_rad, 'g'))
+showCircle(createCircle(67, 128, 3*ap_rad, 'g'))
+plt.scatter(67, 128, marker = '+', s = 20, c = 'g')
+
+distance = np.sqrt( (X_STAR1 - xnew)**2 + (Y_STAR1 - ynew)**2)
+
+background = crop[(distance > 2*ap_rad) & (distance < 3*ap_rad)]
+background_flux = np.sum(background)
+background_dens = np.median(background)
+
+# Cropped image and background noise subtracted
+plt.figure()
+plt.imshow(imdata[ynew, xnew] - background_dens, \
+    vmax = np.percentile(imdata[ynew, xnew] - background_dens, 95), \
+    vmin = np.percentile(imdata[ynew, xnew] - background_dens, 10),  
+    origin = 'lower',
+    cmap = 'gray')
+plt.grid(False)
+
+showCircle(createCircle(100, 99, ap_rad, 'r'))
+showCircle(createCircle(100, 99, 2*ap_rad, 'r'))
+showCircle(createCircle(100, 99, 3*ap_rad, 'r'))
+plt.scatter(100, 99, marker = '+', s = 20, c = 'r')
+
+showCircle(createCircle(67, 128, ap_rad, 'g'))
+showCircle(createCircle(67, 128, 2*ap_rad, 'g'))
+showCircle(createCircle(67, 128, 3*ap_rad, 'g'))
+plt.scatter(67, 128, marker = '+', s = 20, c = 'g')
+
+# Calculating the signal-noise ration
+N_pix = len(crop[poi_inner_area])
+N_obj = np.sum(crop[distance < ap_rad]) - background_dens * N_pix
+signal_noise = (gain * N_obj) / (np.sqrt(gain * N_obj + N_pix * gain * background_dens + N_pix * rdnoise**2)) 
+poi_magnitude = 25 - 2.5 * np.log10(N_obj)
+
+print('Signal-to-noise ratio for an aperture size of {} is {:0.2f}'.format(ap_rad, signal_noise))
+print('Magnitude for an aperture size of {} is {:0.2f}'.format(ap_rad, poi_magnitude))
+
+# Plotting for various radii
+magni_func = lambda n: 25 - 2.5 * np.log10(n)
+
+signal_noise_func = lambda n, pixels, sky: (gain * n) / (np.sqrt(gain * n + pixels * gain * sky + pixels * rdnoise**2)) 
+
+possible_ap_radii = np.arange(1, 39)
+magnis = np.zeros(len(possible_ap_radii))
+sig_noi = np.zeros(len(possible_ap_radii))
+
+for i, ap_rad in enumerate(possible_ap_radii):
+    inner = distance < ap_rad
+    poi = crop[inner]
+    N_pix = len(poi)
+    N_obj = np.sum(poi) - background_dens * N_pix
+    magnis[i] = magni_func(N_obj)
+    sig_noi[i] = signal_noise_func(N_obj, N_pix, background_dens) 
+
+fig, ax = plt.subplots()
+ax.set_xlabel("Aperture radius")
+ax.set_ylabel("Magnitude")
+ax.invert_yaxis()
+ax.plot(possible_ap_radii, magnis)
+
+fig, ax = plt.subplots()
+ax.set_xlabel("Aperture radius")
+ax.set_ylabel("Signal-to-noise ratio")
+ax.scatter(7, max(sig_noi), marker = 'x', color = 'black', zorder = 3)
+ax.hlines(max(sig_noi), 3, 11, color = 'black', ls = "dotted")
+ax.vlines(7, 0, max(sig_noi), color = 'black', ls = 'dotted')
+ax.text(11.5, 473, '(7, 481)')
+ax.plot(possible_ap_radii, sig_noi)
 
 plt.show()
