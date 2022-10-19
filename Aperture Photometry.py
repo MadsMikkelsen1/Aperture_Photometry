@@ -44,10 +44,11 @@ class Photometry:
         self.L_Percent = np.percentile(self.imdata, 10)
         self.U_Percent = np.percentile(self.imdata, 95)
 
-        # Display of image
-        plt.axes().set_aspect('equal')                                                             # Equal x and y axis
-        plt.grid(False)
-        plt.imshow(self.imdata, origin = 'lower', cmap = 'gray', clim = (self.L_Percent, self.U_Percent))         # Origin in lower left corner, colormap, limits found from 1st and 99th percentile
+        if show_loaded:
+            # Display of image
+            plt.axes().set_aspect('equal')                                                             # Equal x and y axis
+            plt.grid(False)
+            plt.imshow(self.imdata, origin = 'lower', cmap = 'gray', clim = (self.L_Percent, self.U_Percent))         # Origin in lower left corner, colormap, limits found from 1st and 99th percentile
 
         # Stars of interest
         self.X_STAR1 = 214 + offset_x
@@ -164,8 +165,7 @@ class Photometry:
             print("Inner area: %.f pixels" % poi_inner_area)
             print("Torus area: %.f pixels" % poi_torus_area)
 
-        # Printing values for brightness and background noise
-        if show:
+            # Printing values for brightness and background noise
             print("Brightness for star of interest: %.f" % poi_star_brightness)
             print("Brightness for reference star: %.f" % refstar_star_brightness)
             print("Background noise around star of interest: %.f" % poi_background_noise)
@@ -173,61 +173,61 @@ class Photometry:
             print("Brightness of V\u2081: %.f" % self.brightness(poi_star_brightness, poi_background_noise, refstar_inner_area , refstar_torus_area))          # Result from brightness formula using C1, C2, A1, A2 from 'PixCollec' function
             print("Brightness of S\u2081: %.f" % self.brightness(refstar_star_brightness, refstar_background_noise, refstar_inner_area, refstar_torus_area))
             l1 = self.brightness(poi_star_brightness, poi_background_noise, refstar_inner_area , refstar_torus_area) 
-        l2 = self.brightness(refstar_star_brightness, refstar_background_noise, refstar_inner_area, refstar_torus_area) 
+            l2 = self.brightness(refstar_star_brightness, refstar_background_noise, refstar_inner_area, refstar_torus_area) 
 
-        # Display of star of interest circles
-        poi_inner = self.createCircle(self.X_STAR1, self.Y_STAR1, ap_rad, 'r')               # Drawing inner circle for point of interest star at (x_coordinate, y_coordinate, radius_inner)
-        poi_innertorus = self.createCircle(self.X_STAR1, self.Y_STAR1, 2*ap_rad, 'r')        # Drawing inner torus circles for POI star at (x_coordinate, y_coordinate, 2*radius_inner)
-        poi_outertorus = self.createCircle(self.X_STAR1, self.Y_STAR1, 3*ap_rad, 'r')        # Drawing outer torus circle for POI star at (x_coordinate, y_coordinate, 3*radius_inner)
-        self.showCircle(poi_inner)
-        self.showCircle(poi_innertorus)
-        self.showCircle(poi_outertorus)
-        plt.scatter(self.X_STAR1, self.Y_STAR1, marker = '+', s = 20, c = 'r')
+            # Display of star of interest circles
+            poi_inner = self.createCircle(self.X_STAR1, self.Y_STAR1, ap_rad, 'r')               # Drawing inner circle for point of interest star at (x_coordinate, y_coordinate, radius_inner)
+            poi_innertorus = self.createCircle(self.X_STAR1, self.Y_STAR1, 2*ap_rad, 'r')        # Drawing inner torus circles for POI star at (x_coordinate, y_coordinate, 2*radius_inner)
+            poi_outertorus = self.createCircle(self.X_STAR1, self.Y_STAR1, 3*ap_rad, 'r')        # Drawing outer torus circle for POI star at (x_coordinate, y_coordinate, 3*radius_inner)
+            self.showCircle(poi_inner)
+            self.showCircle(poi_innertorus)
+            self.showCircle(poi_outertorus)
+            plt.scatter(self.X_STAR1, self.Y_STAR1, marker = '+', s = 20, c = 'r')
 
-        # Display of reference star circles
-        refstar_inner = self.createCircle(self.X_STAR2, self.Y_STAR2, ap_rad, 'g')             # Drawing inner circle for reference star at (x_coordinate, y_coordinate, radius_inner, colour)
-        refstar_innertorus = self.createCircle(self.X_STAR2, self.Y_STAR2, 2*ap_rad, 'g')      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 2*radius_inner, colour)
-        refstar_outertorus = self.createCircle(self.X_STAR2, self.Y_STAR2, 3*ap_rad, 'g')      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 3*radius_inner, colour)
-        self.showCircle(refstar_inner)
-        self.showCircle(refstar_innertorus)
-        self.showCircle(refstar_outertorus)
-        plt.scatter(self.X_STAR2, self.Y_STAR2, marker = '+', s = 20, c = 'g')
+            # Display of reference star circles
+            refstar_inner = self.createCircle(self.X_STAR2, self.Y_STAR2, ap_rad, 'g')             # Drawing inner circle for reference star at (x_coordinate, y_coordinate, radius_inner, colour)
+            refstar_innertorus = self.createCircle(self.X_STAR2, self.Y_STAR2, 2*ap_rad, 'g')      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 2*radius_inner, colour)
+            refstar_outertorus = self.createCircle(self.X_STAR2, self.Y_STAR2, 3*ap_rad, 'g')      # Drawing outer circle for reference star at (x_coordinate, y_coordinate, 3*radius_inner, colour)
+            self.showCircle(refstar_inner)
+            self.showCircle(refstar_innertorus)
+            self.showCircle(refstar_outertorus)
+            plt.scatter(self.X_STAR2, self.Y_STAR2, marker = '+', s = 20, c = 'g')
 
         # Counting pixels in x and y direction near star of interest
         delta = 100                              # Size of cutout around star
         xpixels = np.arange(self.X_STAR1 - delta, self.X_STAR1 + delta)
         ypixels = np.arange(self.Y_STAR1 - delta, self.Y_STAR1 + delta)
-
-        fig, ax = plt.subplots()
-        ax.set_xlabel('Pixels')
-        ax.set_ylabel('Counts')
-        ax.plot(xpixels, self.imdata[self.Y_STAR1, xpixels], label='x')
-        ax.plot(ypixels, self.imdata[xpixels, self.X_STAR1], label='y')
-        ax.legend()
-
-        l_list_test = self.star_brightness_L(self.X_STAR1, self.Y_STAR1)
-        #print(l_list_test)
-
         if show:
+            fig, ax = plt.subplots()
+            ax.set_xlabel('Pixels')
+            ax.set_ylabel('Counts')
+            ax.plot(xpixels, self.imdata[self.Y_STAR1, xpixels], label='x')
+            ax.plot(ypixels, self.imdata[xpixels, self.X_STAR1], label='y')
+            ax.legend()
+
+            l_list_test = self.star_brightness_L(self.X_STAR1, self.Y_STAR1)
+            #print(l_list_test)
+
             print("Magnitude ratio: %.3F" % self.mag_calc(l1, l2))
 
-        # Cropped image around star of interest
+            # Cropped image around star of interest
         xnew, ynew = np.meshgrid(xpixels, ypixels)
+
         crop = self.imdata[ynew, xnew]
-        plt.figure(10)
         if show:
+            plt.figure(10)
             plt.imshow(crop, origin = 'lower', cmap = 'gray', clim = (self.L_Percent, self.U_Percent))         # Origin in lower left corner, colormap, limits found from 1st and 99th percentile
-        plt.grid(False)
+            plt.grid(False)
 
-        self.showCircle(self.createCircle(100, 99, ap_rad, 'r'))
-        self.showCircle(self.createCircle(100, 99, 2*ap_rad, 'r'))
-        self.showCircle(self.createCircle(100, 99, 3*ap_rad, 'r'))
-        plt.scatter(100, 99, marker = '+', s = 20, c = 'r')
+            self.showCircle(self.createCircle(100, 99, ap_rad, 'r'))
+            self.showCircle(self.createCircle(100, 99, 2*ap_rad, 'r'))
+            self.showCircle(self.createCircle(100, 99, 3*ap_rad, 'r'))
+            plt.scatter(100, 99, marker = '+', s = 20, c = 'r')
 
-        self.showCircle(self.createCircle(67, 128, ap_rad, 'g'))
-        self.showCircle(self.createCircle(67, 128, 2*ap_rad, 'g'))
-        self.showCircle(self.createCircle(67, 128, 3*ap_rad, 'g'))
-        plt.scatter(67, 128, marker = '+', s = 20, c = 'g')
+            self.showCircle(self.createCircle(67, 128, ap_rad, 'g'))
+            self.showCircle(self.createCircle(67, 128, 2*ap_rad, 'g'))
+            self.showCircle(self.createCircle(67, 128, 3*ap_rad, 'g'))
+            plt.scatter(67, 128, marker = '+', s = 20, c = 'g')
 
         distance = np.sqrt( (self.X_STAR1 - xnew)**2 + (self.Y_STAR1 - ynew)**2)
 
@@ -235,24 +235,25 @@ class Photometry:
         background_flux = np.sum(background)
         background_dens = np.median(background)
 
-        # Cropped image and background noise subtracted
-        plt.figure(11)
-        plt.imshow(self.imdata[ynew, xnew] - background_dens, \
-            vmax = np.percentile(self.imdata[ynew, xnew] - background_dens, 95), \
-            vmin = np.percentile(self.imdata[ynew, xnew] - background_dens, 10),  
-            origin = 'lower',
-            cmap = 'gray')
-        plt.grid(False)
+        if show:
+            # Cropped image and background noise subtracted
+            plt.figure(11)
+            plt.imshow(self.imdata[ynew, xnew] - background_dens, \
+                vmax = np.percentile(self.imdata[ynew, xnew] - background_dens, 95), \
+                vmin = np.percentile(self.imdata[ynew, xnew] - background_dens, 10),  
+                origin = 'lower',
+                cmap = 'gray')
+            plt.grid(False)
 
-        self.showCircle(self.createCircle(100, 99, ap_rad, 'r'))
-        self.showCircle(self.createCircle(100, 99, 2*ap_rad, 'r'))
-        self.showCircle(self.createCircle(100, 99, 3*ap_rad, 'r'))
-        plt.scatter(100, 99, marker = '+', s = 20, c = 'r')
+            self.showCircle(self.createCircle(100, 99, ap_rad, 'r'))
+            self.showCircle(self.createCircle(100, 99, 2*ap_rad, 'r'))
+            self.showCircle(self.createCircle(100, 99, 3*ap_rad, 'r'))
+            plt.scatter(100, 99, marker = '+', s = 20, c = 'r')
 
-        self.showCircle(self.createCircle(67, 128, ap_rad, 'g'))
-        self.showCircle(self.createCircle(67, 128, 2*ap_rad, 'g'))
-        self.showCircle(self.createCircle(67, 128, 3*ap_rad, 'g'))
-        plt.scatter(67, 128, marker = '+', s = 20, c = 'g')
+            self.showCircle(self.createCircle(67, 128, ap_rad, 'g'))
+            self.showCircle(self.createCircle(67, 128, 2*ap_rad, 'g'))
+            self.showCircle(self.createCircle(67, 128, 3*ap_rad, 'g'))
+            plt.scatter(67, 128, marker = '+', s = 20, c = 'g')
 
         # Calculating the signal-noise ratio
         N_pix = len(crop[poi_inner_area])
@@ -281,20 +282,21 @@ class Photometry:
             magnis[i] = magni_func(N_obj)
             sig_noi[i] = signal_noise_func(N_obj, N_pix, background_dens) 
 
-        fig, ax = plt.subplots()
-        ax.set_xlabel("Aperture radius")
-        ax.set_ylabel("Magnitude")
-        ax.invert_yaxis()
-        ax.plot(possible_ap_radii, magnis)
+        if show:
+            fig, ax = plt.subplots()
+            ax.set_xlabel("Aperture radius")
+            ax.set_ylabel("Magnitude")
+            ax.invert_yaxis()
+            ax.plot(possible_ap_radii, magnis)
 
-        fig, ax = plt.subplots()
-        ax.set_xlabel("Aperture radius")
-        ax.set_ylabel("Signal-to-noise ratio")
-        ax.scatter(7, max(sig_noi), marker = 'x', color = 'black', zorder = 3)
-        ax.hlines(max(sig_noi), 3, 11, color = 'black', ls = "dotted")
-        ax.vlines(7, 0, max(sig_noi), color = 'black', ls = 'dotted')
-        ax.text(11.5, 473, '(7, 481)')
-        ax.plot(possible_ap_radii, sig_noi)
+            fig, ax = plt.subplots()
+            ax.set_xlabel("Aperture radius")
+            ax.set_ylabel("Signal-to-noise ratio")
+            ax.scatter(7, max(sig_noi), marker = 'x', color = 'black', zorder = 3)
+            ax.hlines(max(sig_noi), 3, 11, color = 'black', ls = "dotted")
+            ax.vlines(7, 0, max(sig_noi), color = 'black', ls = 'dotted')
+            ax.text(11.5, 473, '(7, 481)')
+            ax.plot(possible_ap_radii, sig_noi)
 
         if show:
             plt.show()
@@ -302,8 +304,8 @@ class Photometry:
         return (N_obj, self.heljd)
 
 if __name__ == "__main__": 
-    offsets = np.genfromtxt("Cepheider - fits/offsets.txt", dtype=int)[:10]
-    fitsfiles = glob.glob('Cepheider - fits\*.fts')[:10]
+    offsets = np.genfromtxt("Cepheider - fits/offsets.txt", dtype=int)
+    fitsfiles = glob.glob('Cepheider - fits\*.fts')
 
     print("Processing images!")
 
@@ -311,7 +313,7 @@ if __name__ == "__main__":
     heljds = []
 
     for (off_x, off_y), fileurl in zip(offsets, fitsfiles):
-        show_text = f"Showing file {fileurl}"
+        show_text = f"Processing file {fileurl}"
         print(show_text)
         print("-"*len(show_text))
 
