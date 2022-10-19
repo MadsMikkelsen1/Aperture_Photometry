@@ -1,5 +1,5 @@
 # APERTURE PHOTOMETRY #
-
+#%%
 # Import of various libaries
 import numpy as np
 import matplotlib.pyplot as plt
@@ -45,12 +45,16 @@ plt.axes().set_aspect('equal')                                                  
 plt.grid(False)
 plt.imshow(imdata, origin = 'lower', cmap = 'gray', clim = (L_Percent, U_Percent))         # Origin in lower left corner, colormap, limits found from 1st and 99th percentile
 
-# Stars of interest
+# Star of interest
 X_STAR1 = 214
 Y_STAR1 = 239
 
+# Reference star
 X_STAR2 = 181
 Y_STAR2 = 267
+
+# Aperature Radius
+ap_rad = 7
 
 # Circles
 # Defining circle
@@ -91,16 +95,14 @@ def pixel_collector(x, y, r):
     for i in range(x - r, x + r):                                       # Pixel collector in x-direction 
         for j in range(y - r, y + r):                                   # Picel collector in y-direction
             distance = np.sqrt( (i - x)**2 + (j - y)**2 )               # Distance
-            if distance < r:
+            if distance < r:                                            # Count pixels if within inner radius
                 PixCollec = np.append(PixCollec, imdata[j][i])
     C1 = np.sum(PixCollec)
     A1 = len(PixCollec)
 
     return PixCollec
 
-ap_rad = 8
-
-poi_inner_pixels = pixel_collector(X_STAR1, Y_STAR1, ap_rad)               # Counting pixels inside inner-most circle for Point of Interest star
+poi_inner_pixels = pixel_collector(X_STAR1, Y_STAR1, ap_rad)                # Counting pixels inside inner-most circle for Point of Interest star
 poi_innertorus_pixels = pixel_collector(X_STAR1, Y_STAR1, 2*ap_rad)         # Counting pixels inside inner-most torus circle for Point of Interest star
 poi_outertorus_pixels = pixel_collector(X_STAR1, Y_STAR1, 3*ap_rad)         # Counting pixels from outer-most torus circle for POI star
 poi_background_noise = np.sum(poi_outertorus_pixels) - np.sum(poi_innertorus_pixels)                 # Making sure only pixels inside torus is calculated
@@ -175,13 +177,12 @@ delta = 100                              # Size of cutout around star
 xpixels = np.arange(X_STAR1 - delta, X_STAR1 + delta)
 ypixels = np.arange(Y_STAR1 - delta, Y_STAR1 + delta)
 
-fig, ax = plt.subplots()
-ax.set_xlabel('Pixels')
-ax.set_ylabel('Counts')
-ax.plot(xpixels, imdata[Y_STAR1, xpixels], label='x')
-ax.plot(ypixels, imdata[xpixels, X_STAR1], label='y')
-ax.legend()
-
+plt.figure()
+plt.xlabel('Pixels')
+plt.ylabel('Counts')
+plt.plot(xpixels, imdata[Y_STAR1, xpixels], label='x')
+plt.plot(ypixels, imdata[xpixels, X_STAR1], label='y')
+plt.legend()
 # Calculation of magnitudes
 def mag_calc(l1, l2):
     magnitude = -2.5 * np.log(l1 / l2)
@@ -288,4 +289,5 @@ ax.vlines(7, 0, max(sig_noi), color = 'black', ls = 'dotted')
 ax.text(11.5, 473, '(7, 481)')
 ax.plot(possible_ap_radii, sig_noi)
 
+print(np.interp(437.47, sig_noi, possible_ap_radii))
 plt.show()
