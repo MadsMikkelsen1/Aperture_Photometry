@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from astropy.io import fits
 import glob
+import threading
 
 # Ignore all that numpy error shit
 np.seterr(divide='ignore', invalid='ignore')
@@ -159,17 +160,19 @@ class Photometry:
         refstar_inner_area = len(refstar_inner_pixels)
         refstar_torus_area = len(refstar_outertorus_pixels) - len(refstar_innertorus_pixels)
 
-        print("Inner area: %.f pixels" % poi_inner_area)
-        print("Torus area: %.f pixels" % poi_torus_area)
+        if show:
+            print("Inner area: %.f pixels" % poi_inner_area)
+            print("Torus area: %.f pixels" % poi_torus_area)
 
         # Printing values for brightness and background noise
-        print("Brightness for star of interest: %.f" % poi_star_brightness)
-        print("Brightness for reference star: %.f" % refstar_star_brightness)
-        print("Background noise around star of interest: %.f" % poi_background_noise)
-        print("Background noise around reference star: %.f" % refstar_background_noise)
-        print("Brightness of V\u2081: %.f" % self.brightness(poi_star_brightness, poi_background_noise, refstar_inner_area , refstar_torus_area))          # Result from brightness formula using C1, C2, A1, A2 from 'PixCollec' function
-        print("Brightness of S\u2081: %.f" % self.brightness(refstar_star_brightness, refstar_background_noise, refstar_inner_area, refstar_torus_area))
-        l1 = self.brightness(poi_star_brightness, poi_background_noise, refstar_inner_area , refstar_torus_area) 
+        if show:
+            print("Brightness for star of interest: %.f" % poi_star_brightness)
+            print("Brightness for reference star: %.f" % refstar_star_brightness)
+            print("Background noise around star of interest: %.f" % poi_background_noise)
+            print("Background noise around reference star: %.f" % refstar_background_noise)
+            print("Brightness of V\u2081: %.f" % self.brightness(poi_star_brightness, poi_background_noise, refstar_inner_area , refstar_torus_area))          # Result from brightness formula using C1, C2, A1, A2 from 'PixCollec' function
+            print("Brightness of S\u2081: %.f" % self.brightness(refstar_star_brightness, refstar_background_noise, refstar_inner_area, refstar_torus_area))
+            l1 = self.brightness(poi_star_brightness, poi_background_noise, refstar_inner_area , refstar_torus_area) 
         l2 = self.brightness(refstar_star_brightness, refstar_background_noise, refstar_inner_area, refstar_torus_area) 
 
         # Display of star of interest circles
@@ -205,12 +208,13 @@ class Photometry:
         l_list_test = self.star_brightness_L(self.X_STAR1, self.Y_STAR1)
         #print(l_list_test)
 
-        print("Magnitude ratio: %.3F" % self.mag_calc(l1, l2))
+        if show:
+            print("Magnitude ratio: %.3F" % self.mag_calc(l1, l2))
 
         # Cropped image around star of interest
         xnew, ynew = np.meshgrid(xpixels, ypixels)
         crop = self.imdata[ynew, xnew]
-        plt.figure()
+        plt.figure(10)
         if show:
             plt.imshow(crop, origin = 'lower', cmap = 'gray', clim = (self.L_Percent, self.U_Percent))         # Origin in lower left corner, colormap, limits found from 1st and 99th percentile
         plt.grid(False)
@@ -232,7 +236,7 @@ class Photometry:
         background_dens = np.median(background)
 
         # Cropped image and background noise subtracted
-        plt.figure()
+        plt.figure(11)
         plt.imshow(self.imdata[ynew, xnew] - background_dens, \
             vmax = np.percentile(self.imdata[ynew, xnew] - background_dens, 95), \
             vmin = np.percentile(self.imdata[ynew, xnew] - background_dens, 10),  
@@ -256,8 +260,9 @@ class Photometry:
         signal_noise = (self.gain * N_obj) / (np.sqrt(self.gain * N_obj + N_pix * self.gain * background_dens + N_pix * self.rdnoise**2)) 
         poi_magnitude = 25 - 2.5 * np.log10(N_obj)
 
-        print('Signal-to-noise ratio for an aperture size of {} is {:0.2f}'.format(ap_rad, signal_noise))
-        print('Magnitude for an aperture size of {} is {:0.2f}'.format(ap_rad, poi_magnitude))
+        if show:
+            print('Signal-to-noise ratio for an aperture size of {} is {:0.2f}'.format(ap_rad, signal_noise))
+            print('Magnitude for an aperture size of {} is {:0.2f}'.format(ap_rad, poi_magnitude))
 
         # Plotting for various radii
         magni_func = lambda n: 25 - 2.5 * np.log10(n)
@@ -293,12 +298,17 @@ class Photometry:
 
         if show:
             plt.show()
+        
+        return (N_obj, self.heljd)
 
 if __name__ == "__main__": 
-    offsets = np.genfromtxt("Cepheider - fits/offsets.txt", dtype=int)
-    fitsfiles = glob.glob('Cepheider - fits\*.fts')
+    offsets = np.genfromtxt("Cepheider - fits/offsets.txt", dtype=int)[:10]
+    fitsfiles = glob.glob('Cepheider - fits\*.fts')[:10]
 
     print("Processing images!")
+
+    N_objs = []
+    heljds = []
 
     for (off_x, off_y), fileurl in zip(offsets, fitsfiles):
         show_text = f"Showing file {fileurl}"
@@ -306,4 +316,10 @@ if __name__ == "__main__":
         print("-"*len(show_text))
 
         p = Photometry(fileurl, off_x, off_y, show_loaded=False)
-        p.do_calculation(show=False)
+        N_obj, heljd = p.do_calculation(show=False)
+
+        N_objs.append(N_obj)
+        heljds.append(heljd)
+
+    plt.plot(N_objs, heljds)
+    plt.show()
