@@ -1,12 +1,11 @@
 # APERTURE PHOTOMETRY #
-
+#%%
 # Import of various libaries
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from astropy.io import fits
 import glob
-import threading
 
 # Ignore all that numpy error shit
 np.seterr(divide='ignore', invalid='ignore')
