@@ -304,7 +304,7 @@ class Photometry:
 
 if __name__ == "__main__": 
     offsets = np.genfromtxt("Cepheider - fits/offsets.txt", dtype=int)
-    fitsfiles = glob.glob('Cepheider - fits\*.fts')
+    fitsfiles = glob.glob('Cepheider - fits/*.fts')
 
     print("Processing images!")
 
@@ -320,7 +320,8 @@ if __name__ == "__main__":
         N_obj, heljd = p.do_calculation(show=False)
 
         N_objs.append(N_obj)
+        N_objs_new = np.where(np.array(N_objs) < 1e6, N_objs,0)
         heljds.append(heljd)
 
-    plt.plot(N_objs, heljds)
+    plt.scatter(heljds, N_objs_new)
     plt.show()
