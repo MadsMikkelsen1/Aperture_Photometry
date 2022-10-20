@@ -339,4 +339,5 @@ if __name__ == "__main__":
     plt.xlabel("Date of observation")
     plt.ylabel("Apparent magnitude")
     plt.xticks(rotation = 30)
+    plt.gca().invert_yaxis()
     plt.show()
