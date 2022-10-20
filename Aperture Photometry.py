@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from astropy.io import fits
 import glob
+import pandas as pd
+import datetime
+import julian 
 
 # Ignore all that numpy error shit
 np.seterr(divide='ignore', invalid='ignore')
@@ -139,6 +142,11 @@ class Photometry:
             poi_star_brightness = np.sum(poi_inner_pixels)                                                       # Star of interest brightness
             L.append(poi_star_brightness)
         return L
+
+    # def jdtodatestd(jdate):                                                          # Function converting Julian date to regular date
+    #     fmt = '%Y%j'                                                                 # From https://rafatieppo.github.io/post/2018_12_01_juliandate/
+    #     datestd = datetime.datetime.strptime(jdate, fmt).date()
+    #     return datestd
 
     def do_calculation(self, show=True):
         cid = self.fig.canvas.mpl_connect('button_press_event', self.onclick)
@@ -311,6 +319,7 @@ if __name__ == "__main__":
 
     N_objs = []
     heljds = []
+    magnis = []
 
     for (off_x, off_y), fileurl in zip(offsets, fitsfiles):
         show_text = f"Processing file {fileurl}"
@@ -319,10 +328,15 @@ if __name__ == "__main__":
 
         p = Photometry(fileurl, off_x, off_y, show_loaded=False)
         N_obj, heljd = p.do_calculation(show=False)
-
         N_objs.append(N_obj)
         N_objs_new = np.where(np.array(N_objs) < 1e6, N_objs,0)
         heljds.append(heljd)
-
-    plt.scatter(heljds, N_objs_new)
+        magnitude = -2.5 * np.log10(np.array(N_objs)) + 25
+        magnis.append(magnitude)
+    t = pd.to_datetime(heljds, origin='julian', unit='D')
+    plt.plot(t, magnitude)
+    plt.title("Lightcurve for the variable star V1")
+    plt.xlabel("Date of observation")
+    plt.ylabel("Apparent magnitude")
+    plt.xticks(rotation = 30)
     plt.show()
