@@ -305,6 +305,7 @@ class Photometry:
 if __name__ == "__main__": 
     offsets = np.genfromtxt("Cepheider - fits/offsets.txt", dtype=int)
     fitsfiles = glob.glob('Cepheider - fits/*.fts')
+    fitsfiles.sort()
 
     print("Processing images!")
 
